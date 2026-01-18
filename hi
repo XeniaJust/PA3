@@ -1,0 +1,84 @@
+import numpy as np
+
+imgs = np.fromfile('MNIST/train-images-idx3-ubyte', dtype=np.uint8)
+imgs = np.reshape(imgs[16:], [-1, 28, 28])
+labs = np.fromfile('MNIST/train-labels-idx1-ubyte', dtype=np.uint8)
+labs = labs[8:]
+
+digit_imgs = {}
+for d in range(10):
+    idx = np.where(labs == d)[0][:100]
+    digit_imgs[d] = imgs[idx]
+
+def _b(x:np.array):
+    N = x.shape[0]
+    M = x[0].shape[0]
+    O = x[0].shape[1]
+    b = np.zeros((M,O))
+    for i in range(N):
+        b += x[i]
+    return b/N
+
+def _V(x:np.array):
+    N = x.shape[0]
+    M = x[0].shape[0]
+    O = x[0].shape[1]
+    b = _b(x)
+    V = np.zeros((M,O))
+    for i in range(N):
+        for j in range(M):
+            for k in range(O):
+                V[j,k] += (x[i][j][k]-b[j,k])**2
+    return V/N
+
+x = np.array([
+    [[1, 2],
+     [3, 4]],
+
+    [[5, 6],
+     [7, 8]]
+])
+print(_b(x))
+print(_V(x))
+
+def _werte(S:np.array):
+    eigenwerte = np.linalg.eig(S)[0]
+    singulärwerte = np.zeros(eigenwerte.shape[0])
+    for i in range(len(singulärwerte)):
+        singulärwerte[i] = np.sqrt(eigenwerte[i])
+    return eigenwerte, singulärwerte
+
+y = np.array(
+    [[9, 0],
+     [0, 4]]
+)
+print(_werte(y))
+
+b = {}
+v = {}
+for d in range(10):
+    b[d] = _b(digit_imgs[d])
+    v[d] = _V(digit_imgs[d])
+
+print(v)
+print(b)
+
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(2, 5, figsize=(12, 5))
+
+for d, ax in enumerate(axes.flat):
+    ax.imshow(b[d])
+    ax.set_title(f"Mittelwert {d}")
+    ax.axis("off")
+
+plt.show()
+
+fig, axes = plt.subplots(2, 5, figsize=(12, 5))
+
+for d, ax in enumerate(axes.flat):
+    ax.imshow(v[d])
+    ax.set_title(f"Varianz {d}")
+    ax.axis("off")
+
+plt.show()
